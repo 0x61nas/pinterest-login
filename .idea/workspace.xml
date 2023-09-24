@@ -8,8 +8,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="771b585c-6332-452e-b20f-06225c1d2e88" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/deny.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +65,7 @@
       <option name="presentableId" value="Default" />
       <updated>1695476293279</updated>
       <workItem from="1695476295812" duration="35000" />
-      <workItem from="1695476336008" duration="3717000" />
+      <workItem from="1695476336008" duration="7162000" />
     </task>
     <servers />
   </component>
