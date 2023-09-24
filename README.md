@@ -9,6 +9,8 @@ Simple crate to login to Pinterest and get the cookies via Chromiumoxide to simu
 
 Asynchronous, and uses async-std as the runtime by default (you can use tokio if you want)
 
+>  WARNING: This project isn't officially supported by Pinterest, and it's not affiliated with Pinterest in any way.
+
 ## Examples
 
 ### With the `async-std` runtime
@@ -117,5 +119,6 @@ This project is licensed under ether the [MIT license][mit] or the [Unlicense li
 
 
 > This project is part of the [pinterest-rs](https://github.com/0x61nas/pinterest-rs) project
+
 
 License: MIT OR Unlicense
