@@ -2,6 +2,7 @@
 name = "pinterest-login"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.64.0"
 authors = ["Anas Elgarhy <anas.elgarhy.dev@gmail.com>"]
 description = "A Pinterest login library that uses chromiumoxide to emulate a browser and login to Pinterest."
 license = "MIT OR Unlicense"
