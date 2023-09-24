@@ -97,6 +97,7 @@
 //!
 //!
 //! > This project is part of the [pinterest-rs](https://github.com/0x61nas/pinterest-rs) project
+#![deny(missing_docs, clippy::all)]
 pub mod config_builder;
 pub mod login_bot;
 
