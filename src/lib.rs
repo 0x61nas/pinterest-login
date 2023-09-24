@@ -125,12 +125,12 @@ pub mod login_bot;
 use std::collections::HashMap;
 // #[cfg(feature = "async-std-runtime")]
 // use async_std::prelude::StreamExt;
-use futures::StreamExt;
-use chromiumoxide::Browser;
 use crate::config_builder::BrowserConfigBuilder;
 use crate::login_bot::BrowserLoginBot;
+use chromiumoxide::Browser;
+use futures::StreamExt;
 #[cfg(feature = "debug")]
-use log::{info, trace, debug};
+use log::{debug, info, trace};
 
 /// The pinterest login url
 pub const PINTEREST_LOGIN_URL: &str = "https://pinterest.com/login";
@@ -181,15 +181,20 @@ pub type Result<T> = std::result::Result<T, PinterestLoginError>;
 /// * `AuthenticationError` - If the email or password is incorrect
 ///
 #[inline]
-pub async fn login(login_bot: &dyn BrowserLoginBot, config_builder: &dyn BrowserConfigBuilder)
-                   -> Result<HashMap<String, String>> {
+pub async fn login(
+    login_bot: &dyn BrowserLoginBot,
+    config_builder: &dyn BrowserConfigBuilder,
+) -> Result<HashMap<String, String>> {
     #[cfg(feature = "debug")]
     info!("Launching the browser");
 
     let (browser, mut handler) = Browser::launch(config_builder.build_browser_config()?).await?;
 
     #[cfg(feature = "debug")]
-    info!("The browser has been launched\nBrowser version: {:?}", browser.version().await?);
+    info!(
+        "The browser has been launched\nBrowser version: {:?}",
+        browser.version().await?
+    );
 
     #[cfg(feature = "async-std-runtime")]
     let handle = async_std::task::spawn(async move {
@@ -211,7 +216,8 @@ pub async fn login(login_bot: &dyn BrowserLoginBot, config_builder: &dyn Browser
     let page = browser.new_page(PINTEREST_LOGIN_URL).await?;
     page.wait_for_navigation().await?;
 
-    #[cfg(feature = "debug")] {
+    #[cfg(feature = "debug")]
+    {
         info!("The login page has been loaded");
         trace!("The login page content: {}", page.content().await?);
         debug!("The login page cookies: {:?}", page.get_cookies().await?);
@@ -224,13 +230,13 @@ pub async fn login(login_bot: &dyn BrowserLoginBot, config_builder: &dyn Browser
     // Click the login button
     login_bot.submit_login_form(&page).await?;
 
-    #[cfg(feature = "debug")] {
+    #[cfg(feature = "debug")]
+    {
         info!("The login form has been submitted");
         info!("Waiting for the login to complete, and checking if the login was successful");
     }
     // Check if the login was successful
     login_bot.check_login(&page).await?;
-
 
     let mut cookies = HashMap::with_capacity(5);
 
@@ -239,7 +245,8 @@ pub async fn login(login_bot: &dyn BrowserLoginBot, config_builder: &dyn Browser
     // Get the cookies
     let c = page.get_cookies().await?;
 
-    #[cfg(feature = "debug")] {
+    #[cfg(feature = "debug")]
+    {
         info!("The cookies have been retrieved");
         debug!("The cookies: {c:?}");
         debug!("The cookies length: {}", c.len());

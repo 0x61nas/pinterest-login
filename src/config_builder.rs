@@ -1,7 +1,7 @@
-use chromiumoxide::BrowserConfig;
 use crate::PinterestLoginError;
+use chromiumoxide::BrowserConfig;
 #[cfg(feature = "debug")]
-use log::{info, trace, debug};
+use log::{debug, info, trace};
 
 /// The browser config builder trait, that provides a method to build a chromiumoxide browser config
 /// You can implement this trait for your own struct, and use it to build a chromiumoxide browser config
@@ -45,7 +45,7 @@ pub trait BrowserConfigBuilder {
 pub struct DefaultBrowserConfigBuilder {
     headless: bool,
     request_timeout: Option<std::time::Duration>,
-    launch_timeout: Option<std::time::Duration>
+    launch_timeout: Option<std::time::Duration>,
 }
 
 impl DefaultBrowserConfigBuilder {
@@ -55,11 +55,15 @@ impl DefaultBrowserConfigBuilder {
     /// * `headless` - Whether to launch the browser in headless mode or not (you probably want this to be true)
     /// * `request_timeout` - The timeout for requests, the default is no timeout (you probably want to set this unless you want to wait forever if you take the internet from potato)
     /// * `lunch_timeout` - The timeout for launching the browser, the default is no timeout
-    pub fn new(headless: bool, request_timeout: Option<std::time::Duration>, launch_timeout: Option<std::time::Duration>) -> Self {
+    pub fn new(
+        headless: bool,
+        request_timeout: Option<std::time::Duration>,
+        launch_timeout: Option<std::time::Duration>,
+    ) -> Self {
         Self {
             headless,
             request_timeout,
-            launch_timeout
+            launch_timeout,
         }
     }
 }
@@ -67,7 +71,8 @@ impl DefaultBrowserConfigBuilder {
 impl BrowserConfigBuilder for DefaultBrowserConfigBuilder {
     #[inline(always)]
     fn build_browser_config(&self) -> crate::Result<BrowserConfig> {
-        #[cfg(feature = "debug")] {
+        #[cfg(feature = "debug")]
+        {
             debug!("Building browser config");
             trace!("Headless: {}", self.headless);
             trace!("Request timeout: {:?}", self.request_timeout);
@@ -80,25 +85,30 @@ impl BrowserConfigBuilder for DefaultBrowserConfigBuilder {
         };
 
         if let Some(timeout) = self.request_timeout {
-            #[cfg(feature = "debug")] {
+            #[cfg(feature = "debug")]
+            {
                 trace!("Setting request timeout to {:?}", timeout);
             }
             browser_config_builder = browser_config_builder.request_timeout(timeout);
         }
 
         if let Some(timeout) = self.launch_timeout {
-            #[cfg(feature = "debug")] {
+            #[cfg(feature = "debug")]
+            {
                 trace!("Setting launch timeout to {:?}", timeout);
             }
             browser_config_builder = browser_config_builder.launch_timeout(timeout);
         }
-        
-        #[cfg(feature = "debug")] {
+
+        #[cfg(feature = "debug")]
+        {
             info!("Built browser config");
             trace!("Browser config: {:?}", browser_config_builder);
         }
 
-        browser_config_builder.build().map_err(PinterestLoginError::BrowserConfigBuildError)
+        browser_config_builder
+            .build()
+            .map_err(PinterestLoginError::BrowserConfigBuildError)
     }
 }
 

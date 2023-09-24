@@ -1,8 +1,8 @@
 use chromiumoxide::Page;
 #[cfg(feature = "debug")]
-use log::{info, trace, debug};
+use log::{debug, info, trace};
 
-use crate::{PINTEREST_LOGIN_URL, PinterestLoginError};
+use crate::{PinterestLoginError, PINTEREST_LOGIN_URL};
 
 /// Trait for login bots, which are used to fill and submit the login form in the browser
 ///
@@ -65,10 +65,7 @@ impl<'a> DefaultBrowserLoginBot<'a> {
     /// * `email` - The email to login with
     /// * `password` - The password to login with
     pub fn new(email: &'a str, password: &'a str) -> Self {
-        Self {
-            email,
-            password,
-        }
+        Self { email, password }
     }
 }
 
@@ -79,25 +76,43 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
         const EMAIL_INPUT_SELECTOR: &str = "input#email";
         const PASSWORD_INPUT_SELECTOR: &str = "input#password";
 
-        #[cfg(feature = "debug")] {
-            trace!("Filling the login form with the email: {} and password: {}", self.email, self.password);
+        #[cfg(feature = "debug")]
+        {
+            trace!(
+                "Filling the login form with the email: {} and password: {}",
+                self.email,
+                self.password
+            );
             debug!("entering the email");
-            trace!("Finding the email input field with the selector: {}", EMAIL_INPUT_SELECTOR);
+            trace!(
+                "Finding the email input field with the selector: {}",
+                EMAIL_INPUT_SELECTOR
+            );
         }
         // Wait for the page to load, and then find the email input field and fill it
-        page.find_element(EMAIL_INPUT_SELECTOR).await?
-            .click().await?
-            .type_str(self.email).await?;
+        page.find_element(EMAIL_INPUT_SELECTOR)
+            .await?
+            .click()
+            .await?
+            .type_str(self.email)
+            .await?;
 
-        #[cfg(feature = "debug")] {
+        #[cfg(feature = "debug")]
+        {
             debug!("Email entered successfully, entering the password");
-            trace!("Finding the password input field with the selector: {}", PASSWORD_INPUT_SELECTOR);
+            trace!(
+                "Finding the password input field with the selector: {}",
+                PASSWORD_INPUT_SELECTOR
+            );
         }
 
         // Find the password input field and fill it
-        page.find_element(PASSWORD_INPUT_SELECTOR).await?
-            .click().await?
-            .type_str(self.password).await?;
+        page.find_element(PASSWORD_INPUT_SELECTOR)
+            .await?
+            .click()
+            .await?
+            .type_str(self.password)
+            .await?;
 
         #[cfg(feature = "debug")]
         debug!("Password entered successfully");
@@ -109,14 +124,20 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
     async fn submit_login_form(&self, page: &Page) -> crate::Result<()> {
         const LOGIN_BUTTON_SELECTOR: &str = "button[type='submit']";
 
-        #[cfg(feature = "debug")] {
+        #[cfg(feature = "debug")]
+        {
             debug!("Submitting the login form");
             info!("Finding the submit button and clicking it");
-            trace!("Finding the submit button with the selector: {}", LOGIN_BUTTON_SELECTOR);
+            trace!(
+                "Finding the submit button with the selector: {}",
+                LOGIN_BUTTON_SELECTOR
+            );
         }
         // Find the submit button and click it
-        page.find_element(LOGIN_BUTTON_SELECTOR).await?
-            .click().await?;
+        page.find_element(LOGIN_BUTTON_SELECTOR)
+            .await?
+            .click()
+            .await?;
 
         #[cfg(feature = "debug")]
         debug!("Login form submitted successfully");
@@ -137,7 +158,8 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
                 Err(PinterestLoginError::AuthenticationError)
             }
             Some(url) => {
-                #[cfg(feature = "debug")] {
+                #[cfg(feature = "debug")]
+                {
                     debug!("Got the url: {}", url);
                     info!("Checking if the url is the same as the login url");
                 }
