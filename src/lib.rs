@@ -1,4 +1,10 @@
-//! Simple crate to login to Pinterest and get the cookies via chromiumoxide to simulate a browser (open a real browser actually)
+//! Simple crate to login to Pinterest and get the cookies via Chromiumoxide to simulate a browser (open a real browser actually), to use the Pinterest API without needing a developer account or an API key or anything that costs money :).
+//!
+//! [![crates.io](https://img.shields.io/crates/v/pinterest-login.svg)](https://crates.io/crates/pinterest-login)
+//! [![docs.rs](https://docs.rs/pinterest-login/badge.svg)](https://docs.rs/pinterest-login)
+//! [![downloads](https://img.shields.io/crates/d/pinterest-login.svg)](https://crates.io/crates/pinterest-login)
+//! [![license](https://img.shields.io/crates/l/pinterest-login.svg)][mit]
+//!
 //! Asynchronous, and uses async-std as the runtime by default (you can use tokio if you want)
 //!
 //! # Examples
@@ -96,9 +102,24 @@
 //! * `debug`: Enable debug logging
 //!
 //!
+//! # Contributing
+//! I'm happy to accept any contributions, just consider reading the [CONTRIBUTING.md](https://github.com/0x61nas/pinterest-login/blob/aurora/CONTRIBUTING.md) guide first. to avoid waste waste our time on some unnecessary things.
+//!
+//! > the main keywords are: **signed commits**, **conventional commits**, **no emojis**, **linear history**, **the PR shouldn't have more than tree commits most of the time**
+//!
+//! # License
+//! This project is licensed under ether the [MIT license][mit] or the [Unlicense license][unlicense], you can choose which one you want.
+//!
+//! [mit]: https://github.com/0x61nas/pinterest-login/blob/aurora/LICENSE
+//! [unlicense]: https://github.com/0x61nas/pinterest-login/blob/aurora/LICENSE-UNLICENSE
+//!
+//!
 //! > This project is part of the [pinterest-rs](https://github.com/0x61nas/pinterest-rs) project
 #![deny(missing_docs, clippy::all)]
+
+/// The chromiumoxide browser config builder
 pub mod config_builder;
+/// The pinterest login bot
 pub mod login_bot;
 
 use std::collections::HashMap;
