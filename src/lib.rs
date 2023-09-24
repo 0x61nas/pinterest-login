@@ -7,6 +7,8 @@
 //!
 //! Asynchronous, and uses async-std as the runtime by default (you can use tokio if you want)
 //!
+//! >  WARNING: This project isn't officially supported by Pinterest, and it's not affiliated with Pinterest in any way.
+//!
 //! # Examples
 //!
 //! ## With the `async-std` runtime
@@ -115,6 +117,7 @@
 //!
 //!
 //! > This project is part of the [pinterest-rs](https://github.com/0x61nas/pinterest-rs) project
+//!
 #![deny(missing_docs, clippy::all)]
 
 /// The chromiumoxide browser config builder
