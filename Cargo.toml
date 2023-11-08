@@ -22,7 +22,7 @@ thiserror = "1.0.50"
 async-trait = "0.1.74"
 
 [dependencies.chromiumoxide]
-version = "0.5.5"
+version = "0.5.6"
 default-features = false
 
 [dependencies.async-std]
