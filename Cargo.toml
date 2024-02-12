@@ -18,7 +18,7 @@ categories = ["web-programming", "api-bindings", "authentication"]
 
 [dependencies]
 futures = "0.3.30"
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 async-trait = "0.1.77"
 
 [dependencies.chromiumoxide]
