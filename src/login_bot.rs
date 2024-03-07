@@ -1,5 +1,5 @@
 use chromiumoxide::Page;
-#[cfg(feature = "debug")]
+#[cfg(feature = "log")]
 use log::{debug, info, trace};
 
 use crate::{PinterestLoginError, PINTEREST_LOGIN_URL};
@@ -76,7 +76,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
         const EMAIL_INPUT_SELECTOR: &str = "input#email";
         const PASSWORD_INPUT_SELECTOR: &str = "input#password";
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         {
             trace!(
                 "Filling the login form with the email: {} and password: {}",
@@ -97,7 +97,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
             .type_str(self.email)
             .await?;
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         {
             debug!("Email entered successfully, entering the password");
             trace!(
@@ -114,7 +114,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
             .type_str(self.password)
             .await?;
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         debug!("Password entered successfully");
 
         Ok(())
@@ -124,7 +124,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
     async fn submit_login_form(&self, page: &Page) -> crate::Result<()> {
         const LOGIN_BUTTON_SELECTOR: &str = "button[type='submit']";
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         {
             debug!("Submitting the login form");
             info!("Finding the submit button and clicking it");
@@ -139,7 +139,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
             .click()
             .await?;
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         debug!("Login form submitted successfully");
 
         Ok(())
@@ -147,29 +147,29 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
 
     #[inline(always)]
     async fn check_login(&self, page: &Page) -> crate::Result<()> {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         debug!("Checking if the login was successful");
         // Wait for the page to load, and then check if the login was successful
         match page.wait_for_navigation().await?.url().await? {
             None => {
-                #[cfg(feature = "debug")]
+                #[cfg(feature = "log")]
                 debug!("Couldn't get the url, the login was unsuccessful");
                 // If we can't get the url, then the login was unsuccessful
                 Err(PinterestLoginError::AuthenticationError)
             }
             Some(url) => {
-                #[cfg(feature = "debug")]
+                #[cfg(feature = "log")]
                 {
                     debug!("Got the url: {}", url);
                     info!("Checking if the url is the same as the login url");
                 }
                 if url == PINTEREST_LOGIN_URL {
-                    #[cfg(feature = "debug")]
+                    #[cfg(feature = "log")]
                     debug!("The url is the same as the login url, the login was unsuccessful");
                     // If the url is the same as the login url, then the login was unsuccessful
                     Err(PinterestLoginError::AuthenticationError)
                 } else {
-                    #[cfg(feature = "debug")]
+                    #[cfg(feature = "log")]
                     info!("The url is not the same as the login url, the login was successful");
                     Ok(())
                 }

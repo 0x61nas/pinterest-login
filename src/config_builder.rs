@@ -1,6 +1,6 @@
 use crate::PinterestLoginError;
 use chromiumoxide::BrowserConfig;
-#[cfg(feature = "debug")]
+#[cfg(feature = "log")]
 use log::{debug, info, trace};
 
 /// The browser config builder trait, that provides a method to build a chromiumoxide browser config
@@ -71,7 +71,7 @@ impl DefaultBrowserConfigBuilder {
 impl BrowserConfigBuilder for DefaultBrowserConfigBuilder {
     #[inline(always)]
     fn build_browser_config(&self) -> crate::Result<BrowserConfig> {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         {
             debug!("Building browser config");
             trace!("Headless: {}", self.headless);
@@ -85,7 +85,7 @@ impl BrowserConfigBuilder for DefaultBrowserConfigBuilder {
         };
 
         if let Some(timeout) = self.request_timeout {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "log")]
             {
                 trace!("Setting request timeout to {:?}", timeout);
             }
@@ -93,14 +93,14 @@ impl BrowserConfigBuilder for DefaultBrowserConfigBuilder {
         }
 
         if let Some(timeout) = self.launch_timeout {
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "log")]
             {
                 trace!("Setting launch timeout to {:?}", timeout);
             }
             browser_config_builder = browser_config_builder.launch_timeout(timeout);
         }
 
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         {
             info!("Built browser config");
             trace!("Browser config: {:?}", browser_config_builder);
