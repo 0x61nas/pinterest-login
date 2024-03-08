@@ -107,7 +107,7 @@
 //! # Contributing
 //! I'm happy to accept any contributions, just consider reading the [CONTRIBUTING.md](https://github.com/0x61nas/pinterest-login/blob/aurora/CONTRIBUTING.md) guide first. to avoid waste waste our time on some unnecessary things.
 //!
-//! > the main keywords are: **signed commits**, **conventional commits**, **no emojis**, **linear history**, **the PR shouldn't have more than tree commits most of the time**
+//! > the main keywords are: **signed commits**, **conventional commits**, **no emojis**, **linear history**, **try to compine the commits if posoble**
 //!
 //! # License
 //! This project is licensed under ether the [MIT license][mit] or the [Unlicense license][unlicense], you can choose which one you want.
@@ -125,14 +125,13 @@ pub mod config_builder;
 /// The pinterest login bot
 pub mod login_bot;
 
-use std::collections::HashMap;
-// #[cfg(feature = "async-std-runtime")]
+// #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
 // use async_std::prelude::StreamExt;
 use crate::config_builder::BrowserConfigBuilder;
 use crate::login_bot::BrowserLoginBot;
-use chromiumoxide::Browser;
+use chromiumoxide::{cdp::browser_protocol::target::CreateTargetParams, Browser};
 use futures::StreamExt;
-#[cfg(feature = "debug")]
+#[cfg(feature = "log")]
 use log::{debug, info, trace};
 
 /// The pinterest login url
@@ -155,6 +154,8 @@ pub enum PinterestLoginError {
 
 /// A type alias for `Result<T, PinterestLoginError>`
 pub type Result<T> = std::result::Result<T, PinterestLoginError>;
+/// Pinterest cookies map.
+pub type PinterestCookies = std::collections::HashMap<String, String>;
 
 /// Logs into Pinterest and returns the cookies as a HashMap
 ///
@@ -187,39 +188,48 @@ pub type Result<T> = std::result::Result<T, PinterestLoginError>;
 pub async fn login(
     login_bot: &dyn BrowserLoginBot,
     config_builder: &dyn BrowserConfigBuilder,
-) -> Result<HashMap<String, String>> {
-    #[cfg(feature = "debug")]
+) -> Result<PinterestCookies> {
+    #[cfg(feature = "log")]
     info!("Launching the browser");
 
-    let (browser, mut handler) = Browser::launch(config_builder.build_browser_config()?).await?;
+    let (mut browser, mut handler) =
+        Browser::launch(config_builder.build_browser_config()?).await?;
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     info!(
         "The browser has been launched\nBrowser version: {:?}",
         browser.version().await?
     );
 
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
     let handle = async_std::task::spawn(async move {
         loop {
             let _event = handler.next().await;
         }
     });
 
-    #[cfg(all(feature = "tokio-runtime", not(feature = "async-std-runtime")))]
+    #[cfg(feature = "tokio")]
     let handle = tokio::spawn(async move {
         loop {
             let _event = handler.next().await;
         }
     });
 
-    #[cfg(feature = "debug")]
+    // TODO: make this configurable
+    browser.start_incognito_context().await?;
+
+    let page = browser.new_page(CreateTargetParams::default()).await?;
+    page.disable_log().await?.disable_debugger().await?;
+    page.enable_stealth_mode().await?;
+
+    #[cfg(feature = "log")]
     info!("Navigating to the login page: {}", PINTEREST_LOGIN_URL);
+    page.goto(PINTEREST_LOGIN_URL)
+        .await?
+        .wait_for_navigation()
+        .await?;
 
-    let page = browser.new_page(PINTEREST_LOGIN_URL).await?;
-    page.wait_for_navigation().await?;
-
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     {
         info!("The login page has been loaded");
         trace!("The login page content: {}", page.content().await?);
@@ -228,12 +238,12 @@ pub async fn login(
     }
     // Fill the login form
     login_bot.fill_login_form(&page).await?;
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     info!("Submitting the login form");
     // Click the login button
     login_bot.submit_login_form(&page).await?;
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     {
         info!("The login form has been submitted");
         info!("Waiting for the login to complete, and checking if the login was successful");
@@ -241,45 +251,55 @@ pub async fn login(
     // Check if the login was successful
     login_bot.check_login(&page).await?;
 
-    let mut cookies = HashMap::with_capacity(5);
+    const MAP_CAPACITY: usize = 7;
+    let mut cookies = PinterestCookies::with_capacity(MAP_CAPACITY);
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     info!("The login was successful, getting the cookies");
     // Get the cookies
     let c = page.get_cookies().await?;
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     {
         info!("The cookies have been retrieved");
         debug!("The cookies: {c:?}");
         debug!("The cookies length: {}", c.len());
     }
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     info!("Collecting the cookies values and names into a HashMap");
     for cookie in c {
-        #[cfg(feature = "debug")]
+        #[cfg(feature = "log")]
         trace!("Inserting the cookie: {} : {}", cookie.name, cookie.value);
 
         cookies.insert(cookie.name, cookie.value);
     }
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     info!("Canceling the event handler");
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
     // Cancel the event handler
     handle.cancel().await;
-    #[cfg(all(feature = "tokio-runtime", not(feature = "async-std-runtime")))]
+    #[cfg(feature = "tokio")]
     // Cancel the event handler
     handle.abort();
 
-    // #[cfg(feature = "debug")]
+    // #[cfg(feature = "log")]
     // info!("Closing the browser");
     // Close the browser
     // browser.close().await?;
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "log")]
     trace!("The cookies: {cookies:?}");
 
+    debug_assert_eq!(cookies.capacity(), MAP_CAPACITY);
+
     Ok(cookies)
+}
+
+pub(crate) async fn sleep(duration: std::time::Duration) {
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
+    async_std::task::sleep(duration).await;
+    #[cfg(feature = "tokio")]
+    tokio::time::sleep(duration).await;
 }

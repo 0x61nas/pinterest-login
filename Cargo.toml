@@ -1,8 +1,9 @@
 [package]
 name = "pinterest-login"
-version = "0.1.1"
+version = "0.2.0-alpha.1"
 edition = "2021"
-rust-version = "1.64.0"
+rust-version = "1.72.1"
+autobins =  false
 authors = ["Anas Elgarhy <anas.elgarhy.dev@gmail.com>"]
 description = "A Pinterest login library that uses chromiumoxide to emulate a browser and login to Pinterest."
 license = "MIT OR Unlicense"
@@ -16,10 +17,18 @@ keywords = [
 ]
 categories = ["web-programming", "api-bindings", "authentication"]
 
+[[bin]]
+name = "pintrest-login"
+path = "src/bin/main.rs"
+required-features = ["__bin"]
+
 [dependencies]
-futures = "0.3.30"
-thiserror = "1.0.57"
-async-trait = "0.1.77"
+futures = "0.3.28"
+thiserror = "1.0.48"
+async-trait = "0.1.73"
+pretty_env_logger = "0.5.0"
+lazy-regex = "3.1.0"
+rpassword = { version = "7", optional = true }
 
 [dependencies.chromiumoxide]
 version = "0.5.7"
@@ -38,7 +47,14 @@ version = "0.4.21"
 optional = true
 
 [features]
-default = ["async-std-runtime"]
-debug = ["log"]
-async-std-runtime = ["async-std", "chromiumoxide/async-std-runtime"]
-tokio-runtime = ["tokio", "chromiumoxide/tokio-runtime"]
+default = ["__async-std", "__bin"]
+log = ["dep:log"]
+__async-std = ["dep:async-std", "chromiumoxide/async-std-runtime"]
+tokio = ["dep:tokio", "chromiumoxide/tokio-runtime"]
+__bin = ["rpassword"]
+
+[profile.release]
+panic = "abort"
+strip = "symbols"
+lto = true
+codegen-units = 1

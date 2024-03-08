@@ -1,5 +1,3 @@
-# pinterest-login
-
 Simple crate to login to Pinterest and get the cookies via Chromiumoxide to simulate a browser (open a real browser actually), to use the Pinterest API without needing a developer account or an API key or anything that costs money :).
 
 [![crates.io](https://img.shields.io/crates/v/pinterest-login.svg)](https://crates.io/crates/pinterest-login)
@@ -109,7 +107,7 @@ async fn main() {
 ## Contributing
 I'm happy to accept any contributions, just consider reading the [CONTRIBUTING.md](https://github.com/0x61nas/pinterest-login/blob/aurora/CONTRIBUTING.md) guide first. to avoid waste waste our time on some unnecessary things.
 
-> the main keywords are: **signed commits**, **conventional commits**, **no emojis**, **linear history**, **the PR shouldn't have more than tree commits most of the time**
+> the main keywords are: **signed commits**, **conventional commits**, **no emojis**, **linear history**, **try to compine the commits if posoble**
 
 ## License
 This project is licensed under ether the [MIT license][mit] or the [Unlicense license][unlicense], you can choose which one you want.
@@ -121,4 +119,8 @@ This project is licensed under ether the [MIT license][mit] or the [Unlicense li
 > This project is part of the [pinterest-rs](https://github.com/0x61nas/pinterest-rs) project
 
 
-License: MIT OR Unlicense
+## Dependencies graph
+
+![deps graph](./_deps.png)
+
+> Generated with [cargo-depgraph](https://crates.io/crates/cargo-depgraph)
