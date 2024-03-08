@@ -125,12 +125,11 @@ pub mod config_builder;
 /// The pinterest login bot
 pub mod login_bot;
 
-use std::collections::HashMap;
-// #[cfg(feature = "__async-std")]
+// #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
 // use async_std::prelude::StreamExt;
 use crate::config_builder::BrowserConfigBuilder;
 use crate::login_bot::BrowserLoginBot;
-use chromiumoxide::Browser;
+use chromiumoxide::{cdp::browser_protocol::target::CreateTargetParams, Browser};
 use futures::StreamExt;
 #[cfg(feature = "log")]
 use log::{debug, info, trace};
@@ -155,6 +154,8 @@ pub enum PinterestLoginError {
 
 /// A type alias for `Result<T, PinterestLoginError>`
 pub type Result<T> = std::result::Result<T, PinterestLoginError>;
+/// Pinterest cookies map.
+pub type PinterestCookies = std::collections::HashMap<String, String>;
 
 /// Logs into Pinterest and returns the cookies as a HashMap
 ///
@@ -187,11 +188,12 @@ pub type Result<T> = std::result::Result<T, PinterestLoginError>;
 pub async fn login(
     login_bot: &dyn BrowserLoginBot,
     config_builder: &dyn BrowserConfigBuilder,
-) -> Result<HashMap<String, String>> {
+) -> Result<PinterestCookies> {
     #[cfg(feature = "log")]
     info!("Launching the browser");
 
-    let (browser, mut handler) = Browser::launch(config_builder.build_browser_config()?).await?;
+    let (mut browser, mut handler) =
+        Browser::launch(config_builder.build_browser_config()?).await?;
 
     #[cfg(feature = "log")]
     info!(
@@ -199,25 +201,33 @@ pub async fn login(
         browser.version().await?
     );
 
-    #[cfg(feature = "__async-std")]
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
     let handle = async_std::task::spawn(async move {
         loop {
             let _event = handler.next().await;
         }
     });
 
-    #[cfg(all(feature = "tokio", not(feature = "__async-std")))]
+    #[cfg(feature = "tokio")]
     let handle = tokio::spawn(async move {
         loop {
             let _event = handler.next().await;
         }
     });
 
+    // TODO: make this configurable
+    browser.start_incognito_context().await?;
+
+    let page = browser.new_page(CreateTargetParams::default()).await?;
+    page.disable_log().await?.disable_debugger().await?;
+    page.enable_stealth_mode().await?;
+
     #[cfg(feature = "log")]
     info!("Navigating to the login page: {}", PINTEREST_LOGIN_URL);
-
-    let page = browser.new_page(PINTEREST_LOGIN_URL).await?;
-    page.wait_for_navigation().await?;
+    page.goto(PINTEREST_LOGIN_URL)
+        .await?
+        .wait_for_navigation()
+        .await?;
 
     #[cfg(feature = "log")]
     {
@@ -241,7 +251,8 @@ pub async fn login(
     // Check if the login was successful
     login_bot.check_login(&page).await?;
 
-    let mut cookies = HashMap::with_capacity(5);
+    const MAP_CAPACITY: usize = 7;
+    let mut cookies = PinterestCookies::with_capacity(MAP_CAPACITY);
 
     #[cfg(feature = "log")]
     info!("The login was successful, getting the cookies");
@@ -266,10 +277,10 @@ pub async fn login(
 
     #[cfg(feature = "log")]
     info!("Canceling the event handler");
-    #[cfg(feature = "__async-std")]
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
     // Cancel the event handler
     handle.cancel().await;
-    #[cfg(all(feature = "tokio", not(feature = "__async-std")))]
+    #[cfg(feature = "tokio")]
     // Cancel the event handler
     handle.abort();
 
@@ -280,6 +291,8 @@ pub async fn login(
 
     #[cfg(feature = "log")]
     trace!("The cookies: {cookies:?}");
+
+    debug_assert_eq!(cookies.capacity(), MAP_CAPACITY);
 
     Ok(cookies)
 }
