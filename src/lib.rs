@@ -296,3 +296,10 @@ pub async fn login(
 
     Ok(cookies)
 }
+
+pub(crate) async fn sleep(duration: std::time::Duration) {
+    #[cfg(all(feature = "__async-std", not(feature = "tokio")))]
+    async_std::task::sleep(duration).await;
+    #[cfg(feature = "tokio")]
+    tokio::time::sleep(duration).await;
+}
