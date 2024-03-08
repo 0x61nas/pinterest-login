@@ -17,22 +17,25 @@ setup:
     cargo install committed
     cargo install cargo-deny
     cargo install cargo-audit --features=fix
+    cargo install typos-cli
+    cargo install cargo-hack
+
 #   pip install codespell
 
 # Run all the tests
 test:
-    cargo test --no-default-features --features="async-std-runtime"
-    cargo test --no-default-features --features="tokio-runtime"
-
+    cargo test
 
 # Check the program with all features enabled.
 check:
     cargo check
+    cargo hack check --feature-powerset --rust-version --at-least-one-of __async-std,tokio
+    committed aurora..HEAD --no-merge-commit
+    typos
+    codespell --skip="target,git,_typos.toml" --ignore-words="{{ justfile_directory() }}/.codespellignore"
     cargo deny check
     cargo deny check licenses
-    committed aurora..HEAD --no-merge-commit
     cargo audit
-    codespell --skip="target,git" --ignore-words="{{justfile_directory()}}/.codespellignore"
 
 @lint:
     cargo fmt --all -- --check --verbose
@@ -40,16 +43,18 @@ check:
 
 # Run the tests, and generate a coverage report
 coverage:
-    CARGO_INCREMENTAL=0 RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="{{_CARGO_TARGET_DIR}}/coverage/data/cargo-test-%p-%m.profraw" cargo test
+    CARGO_INCREMENTAL=0 RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="{{ _CARGO_TARGET_DIR }}/coverage/data/cargo-test-%p-%m.profraw" cargo test
 
 # Generate the coverage report
 coverage-report: coverage
     # Generate the report in html format using grcov
-    grcov . --binary-path {{_CARGO_TARGET_DIR}}/debug/deps/ -s . -t html --branch --ignore-not-existing --ignore "../*" -o {{_CARGO_TARGET_DIR}}/coverage/report/ --llvm --ignore "/*"
+    grcov . --binary-path {{ _CARGO_TARGET_DIR }}/debug/deps/ -s . -t html --branch --ignore-not-existing --ignore "../*" -o {{ _CARGO_TARGET_DIR }}/coverage/report/ --llvm --ignore "/*"
 
     # Open the report in the browser
-    xdg-open {{_CARGO_TARGET_DIR}}/coverage/report/index.html
+    xdg-open {{ _CARGO_TARGET_DIR }}/coverage/report/index.html
 
 # Generate the readme file
-@generate-readme:
-    cargo readme > README.md
+generate-readme:
+    cargo readme --template _readme.tpl > README.md
+    sed -i "s/\*\*Note\*\*/\[!Note\]/g" README.md
+    cargo depgraph --all-features --build-deps --target-deps | dot -Tpng > _deps.png
