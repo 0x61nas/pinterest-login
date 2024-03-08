@@ -1,8 +1,11 @@
-use chromiumoxide::Page;
+use std::time::Duration;
+
+use async_std::task::sleep;
+use chromiumoxide::{layout::BoundingBox, Element, Page};
 #[cfg(feature = "log")]
 use log::{debug, info, trace};
 
-use crate::{PinterestLoginError, PINTEREST_LOGIN_URL};
+use crate::PinterestLoginError;
 
 /// Trait for login bots, which are used to fill and submit the login form in the browser
 ///
@@ -58,6 +61,11 @@ pub struct DefaultBrowserLoginBot<'a> {
     password: &'a str,
 }
 
+const EMAIL_INPUT_SELECTOR: &str = "input#email";
+const PASSWORD_INPUT_SELECTOR: &str = "input#password";
+const LOGIN_BUTTON_SELECTOR: &str = "//*[contains(text(), 'Log in')]";
+const WAIT_DELAY: u64 = 20;
+
 impl<'a> DefaultBrowserLoginBot<'a> {
     /// Creates a new default login bot
     ///
@@ -71,11 +79,8 @@ impl<'a> DefaultBrowserLoginBot<'a> {
 
 #[async_trait::async_trait]
 impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
-    #[inline(always)]
+    #[inline]
     async fn fill_login_form(&self, page: &Page) -> crate::Result<()> {
-        const EMAIL_INPUT_SELECTOR: &str = "input#email";
-        const PASSWORD_INPUT_SELECTOR: &str = "input#password";
-
         #[cfg(feature = "log")]
         {
             trace!(
@@ -90,12 +95,15 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
             );
         }
         // Wait for the page to load, and then find the email input field and fill it
-        page.find_element(EMAIL_INPUT_SELECTOR)
-            .await?
-            .click()
-            .await?
-            .type_str(self.email)
-            .await?;
+        let e = loop {
+            let Ok(e) = page.find_element(EMAIL_INPUT_SELECTOR).await else {
+                sleep(Duration::from_millis(WAIT_DELAY)).await;
+                continue;
+            };
+            break e;
+        };
+
+        e.type_str(self.email).await?;
 
         #[cfg(feature = "log")]
         {
@@ -109,7 +117,7 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
         // Find the password input field and fill it
         page.find_element(PASSWORD_INPUT_SELECTOR)
             .await?
-            .click()
+            .focus()
             .await?
             .type_str(self.password)
             .await?;
@@ -120,10 +128,8 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
         Ok(())
     }
 
-    #[inline(always)]
+    #[inline]
     async fn submit_login_form(&self, page: &Page) -> crate::Result<()> {
-        const LOGIN_BUTTON_SELECTOR: &str = "button[type='submit']";
-
         #[cfg(feature = "log")]
         {
             debug!("Submitting the login form");
@@ -133,11 +139,33 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
                 LOGIN_BUTTON_SELECTOR
             );
         }
+        let mut buttons = Vec::with_capacity(2);
+        let mut old_bounds = Vec::with_capacity(2);
         // Find the submit button and click it
-        page.find_element(LOGIN_BUTTON_SELECTOR)
-            .await?
-            .click()
-            .await?;
+        for e in page.find_xpaths(LOGIN_BUTTON_SELECTOR).await? {
+            e.click().await?;
+            old_bounds.push(e.bounding_box().await?);
+            buttons.push(e);
+        }
+
+        while page.find_element(EMAIL_INPUT_SELECTOR).await.is_ok() && {
+            // We need this in case if user enters an invalid authentication data.
+            // because in this case pinterest will not change the page and just show up a little tooltip
+            // under the wrong box, and we don't have any way to handle that case besid this _wanky_ sloution
+            // TODO: find a better way.
+            async fn cheack(buttons: &[Element], ob: &[BoundingBox]) -> crate::Result<bool> {
+                for (i, b) in ob.iter().enumerate() {
+                    let nb = buttons[i].bounding_box().await?;
+                    if nb.x != b.x || nb.y != b.y {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            cheack(&buttons, &old_bounds).await?
+        } {
+            sleep(Duration::from_millis(WAIT_DELAY)).await;
+        }
 
         #[cfg(feature = "log")]
         debug!("Login form submitted successfully");
@@ -145,8 +173,9 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
         Ok(())
     }
 
-    #[inline(always)]
+    #[inline]
     async fn check_login(&self, page: &Page) -> crate::Result<()> {
+        use lazy_regex::regex;
         #[cfg(feature = "log")]
         debug!("Checking if the login was successful");
         // Wait for the page to load, and then check if the login was successful
@@ -163,7 +192,8 @@ impl BrowserLoginBot for DefaultBrowserLoginBot<'_> {
                     debug!("Got the url: {}", url);
                     info!("Checking if the url is the same as the login url");
                 }
-                if url == PINTEREST_LOGIN_URL {
+                let regex = regex!(r#"^(https?:\/\/(?:www\.)?pinterest\.com\/login).*$"#);
+                if regex.is_match(&url) {
                     #[cfg(feature = "log")]
                     debug!("The url is the same as the login url, the login was unsuccessful");
                     // If the url is the same as the login url, then the login was unsuccessful
