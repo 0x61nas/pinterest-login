@@ -1,11 +1,10 @@
 use std::time::Duration;
 
-use async_std::task::sleep;
 use chromiumoxide::{layout::BoundingBox, Element, Page};
 #[cfg(feature = "log")]
 use log::{debug, info, trace};
 
-use crate::PinterestLoginError;
+use crate::{sleep, PinterestLoginError};
 
 /// Trait for login bots, which are used to fill and submit the login form in the browser
 ///
