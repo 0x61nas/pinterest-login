@@ -43,7 +43,7 @@ version = "1.38.0"
 optional = true
 
 [dependencies.log]
-version = "0.4.21"
+version = "0.4.22"
 optional = true
 
 [features]
