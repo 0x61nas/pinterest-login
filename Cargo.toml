@@ -27,7 +27,7 @@ futures = "0.3.31"
 thiserror = "2.0.17"
 async-trait = "0.1.89"
 pretty_env_logger = "0.5.0"
-lazy-regex = "3.4.1"
+lazy-regex = "3.4.2"
 rpassword = { version = "7", optional = true }
 
 [dependencies.chromiumoxide]
