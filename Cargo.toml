@@ -39,7 +39,7 @@ version = "1.13.2"
 optional = true
 
 [dependencies.tokio]
-version = "1.51.0"
+version = "1.51.1"
 optional = true
 
 [dependencies.log]
