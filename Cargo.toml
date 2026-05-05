@@ -31,7 +31,7 @@ lazy-regex = "3.6.0"
 rpassword = { version = "7", optional = true }
 
 [dependencies.chromiumoxide]
-version = "0.8.0"
+version = "0.9.0"
 default-features = false
 
 [dependencies.async-std]
