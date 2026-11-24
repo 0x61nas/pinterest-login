@@ -26,7 +26,7 @@ required-features = ["__bin"]
 futures = "0.3.32"
 thiserror = "2.0.18"
 async-trait = "0.1.89"
-pretty_env_logger = "0.5.0"
+pretty_env_logger = "0.6.0"
 lazy-regex = "3.6.0"
 rpassword = { version = "7", optional = true }
 
